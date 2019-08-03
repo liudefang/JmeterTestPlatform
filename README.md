@@ -1,10 +1,7 @@
 **项目说明** 
 - 本项目基于renren-fast Java开发平台开发，内核基于Jmeter-Api和Jmeter脚本实现在线性能压测。
 
-**插播广告：**
 
-如果有需要，请帮忙支持一下：https://www.jianshu.com/p/cd6388627f64
-互帮互助，感谢。
 
 
 **平台特点** 
@@ -76,7 +73,7 @@ renren-fast
 - 执行doc/db.sql文件，初始化数据
 - 修改application-dev.yml，更新MySQL账号和密码
 - 修改MySQL中sys_config表中Jmeter专属配置项，更新为本地地址
-- Eclipse、IDEA运行RenrenApplication.java，则可启动项目
+- Eclipse、IDEA运行RenrenApplication.java，mvn:mvn spring-boot:run则可启动项目
 - 项目访问路径：http://localhost:8080/renren-fast
 - 账号密码：admin/admin
 - Swagger路径：http://localhost:8080/renren-fast/swagger/index.html
