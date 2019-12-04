@@ -218,7 +218,6 @@ public class JmeterStatEntity {
             if (finished > 0) {
                 threadCountsMap.put("Finished", String.valueOf(finished));
             }
-
         }
         return threadCountsMap;
     }

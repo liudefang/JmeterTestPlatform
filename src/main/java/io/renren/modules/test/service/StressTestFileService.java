@@ -110,4 +110,13 @@ public interface StressTestFileService {
      */
     void stopLocal(Long fileId, JmeterRunEntity jmeterRunEntity);
 
+    /**
+     * 启动单个脚本
+     */
+    String runSingle(Long fileId);
+
+    /**
+     * 某个进程内执行的脚本，可以使用这个方法停止
+     */
+    void stopSingle(Long fileId);
 }

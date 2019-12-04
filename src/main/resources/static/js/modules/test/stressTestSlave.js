@@ -8,23 +8,23 @@ $(function () {
             {label: 'IP地址', name: 'ip', width: 50, sortable: false},
             {label: 'Jmeter端口', name: 'jmeterPort', width: 30, sortable: false},
             {label: '用户名', name: 'userName', width: 30, sortable: false},
-            {label: '密码', name: 'passwd', width: 50, sortable: false, hidden: true},
+            {label: '密码', name: 'passwd', width: 50, sortable: false},
             {label: 'ssh端口', name: 'sshPort', width: 30, sortable: false},
             {
                 label: '状态', name: 'status', width: 30, formatter: function (value, options, row) {
                 if (value === 0) {
-                    return '<span class="label label-danger">禁用</span>';
+                    return '<span class="label label-default">禁用</span>';
                 } else if (value === 1) {
                     return '<span class="label label-success">启用</span>';
                 } else if (value === 2) {
-                    return '<span class="label label-warning">正在执行</span>';
+                    return '<span class="label label-warning">进行中</span>';
                 } else if (value === 3) {
-                    return '<span class="label label-danger">出现异常</span>';
+                    return '<span class="label label-danger">异常</span>';
                 }
             }
             },
             {label: '安装路径', name: 'homeDir', width: 100, sortable: false},
-            {label: '权重', name: 'weight', width: 30, sortable: false}
+            {label: '权重(%)', name: 'weight', width: 30, sortable: false}
         ],
         viewrecords: true,
         height: $(window).height() - 150,
@@ -140,6 +140,12 @@ var vm = new Vue({
             });
         },
         batchUpdateStatus: function (value) {
+            var msgStr = "进行中...";
+            if (0 == value) {
+                msgStr = "正在禁用中...";
+            } else {
+                msgStr = "正在启用中...";
+            }
             var slaveIds = getSelectedRows();
             if (slaveIds == null) {
                 return;
@@ -153,7 +159,7 @@ var vm = new Vue({
                 data: {"slaveIds": slaveIds, "status": value},
                 success: function (r) {
                     if (r.code == 0) {
-                        alert('开始执行', function () {
+                        alert(msgStr, function () {
                             vm.reload();
                         });
                     } else {
@@ -176,7 +182,7 @@ var vm = new Vue({
                 data: {"slaveIds": slaveIds, "status": value},
                 success: function (r) {
                     if (r.code == 0) {
-                        alert('开始执行', function () {
+                        alert('启用成功，请自行启动节点服务并确认端口连通！', function () {
                             vm.reload();
                         });
                     } else {
@@ -200,6 +206,23 @@ var vm = new Vue({
                 success: function (r) {
                     if (r.code == 0) {
                         alert('开始执行', function () {
+                            vm.reload();
+                        });
+                    } else {
+                        alert(r.msg);
+                    }
+                }
+            });
+        },
+        batchReload: function () {
+            $.ajax({
+                type: "POST",
+                url: baseURL + "test/stressSlave/batchReload",
+                contentType: "application/json",
+                data: "",
+                success: function (r) {
+                    if (r.code == 0) {
+                        alert('校准完成，前后台状态同步一致！', function () {
                             vm.reload();
                         });
                     } else {

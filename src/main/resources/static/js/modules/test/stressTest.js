@@ -4,7 +4,11 @@ $(function () {
         datatype: "json",
         colModel: [
             {label: '用例ID', name: 'caseId', width: 50, key: true},
-            {label: '名称', name: 'caseName', sortable: false, width: 150},
+            {label: '名称', name: 'caseName', sortable: false, width: 150,
+                formatter: function (value, options, row) {
+                    return "<a href='"+ baseURL  +"modules/test/stressTestFile.html?CaseID=" + row.caseId + "'>" + value + "</a>";
+                }
+            },
             {label: '添加时间', name: 'addTime', width: 90},
             {label: '项目', name: 'project', sortable: false, width: 80},
             {label: '模块', name: 'module', sortable: false, width: 80},
@@ -13,7 +17,7 @@ $(function () {
             { label: '备注', name: 'remark', sortable: false, width: 110 }
         ],
         viewrecords: true,
-        height: $(window).height() - 150,
+        height: $(window).height() - 180,
         rowNum: 50,
         rowList: [10, 30, 50, 100, 200],
         rownumbers: true,
@@ -37,6 +41,7 @@ $(function () {
             $("#jqGrid").closest(".ui-jqgrid-bdiv").css({"overflow-x": "hidden"});
         }
     });
+
 });
 
 var vm = new Vue({
@@ -166,9 +171,9 @@ var vm = new Vue({
             vm.title = "上传";
 
             var img = ['jpg','jpeg', 'png','gif', 'bmp']; //图片
-            var txt = ['txt','sql','log','csv'];  //文字
+            var txt = ['txt','sql','log'];  //文字
             var out = ['cfg','dat','hlp','tmp'];  //文字
-            var ott = ['xlsx','xls','pdf','docx','doc','pptx',];    //表格，幻灯片，WORD，PDF
+            var ott = ['xlsx','xls','pdf','docx','doc','pptx','csv'];    //表格，幻灯片，WORD，PDF
             var sin = ['mpg', 'mpeg', 'avi', 'rm', 'rmvb','mov', 'wmv','asf', 'dat', 'mp4']; //视频
             var ein = ['cd','ogg','mp3','asf','wma','wav','mp3pro','rm','real','ape','module','midi','vqf']; //音频
             var spe = ['jar','war','zip','rar','tag.gz'];//压缩包
@@ -180,6 +185,8 @@ var vm = new Vue({
                 img.concat(txt).concat(ott).concat(spe).concat(zat).concat(viw), {caseIds: caseId} );
         }
         // uploadFiles: function () {
+        //     debugger
+        //
         //     var caseId = getSelectedRow();
         //     if (caseId == null) {
         //         return;
@@ -233,4 +240,3 @@ function initFileInput(formGropId, url, fileCan, extraData) {
         console.log('Uploaded thumbnail successfully removed');
     });
 }
-

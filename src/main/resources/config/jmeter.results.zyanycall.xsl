@@ -13,7 +13,8 @@
                 html, body { width: 100%; height: 100%; background: #b4b4b4; font-size: 12px }
                 table { border: none; border-collapse: collapse; table-layout: fixed }
                 td { vertical-align: baseline; font-size: 12px }
-                #left-panel { position: absolute; left: 0; top: 0; bottom: 0; width: 300px; overflow: auto; background: #dee4ea }
+                #top-panel { position: absolute; top: 0; overflow: hidden; background: #dee4ea }
+                #left-panel { position: absolute; left: 0; top: 57px; bottom: 0; width: 300px; overflow: auto; background: #dee4ea }
                 #left-panel li.navigation { font-weight: bold; cursor: default; color: #9da8b2; line-height: 18px; background-position: 12px 5px; background-repeat: no-repeat; padding: 0 0 0 25px; background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAkAAAAICAYAAAArzdW1AAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9sDEBQqGbO7BEcAAAAdaVRYdENvbW1lbnQAAAAAAENyZWF0ZWQgd2l0aCBHSU1QZC5lBwAAAKRJREFUGNN1zM0KgkAYheF3RvtXSsGyWhRNaILS7bdt11W0KgJvoPwZp0UlBPUtz3nOJw7Hk7necv5dOA2Qaazo2vZP0LEt9olCVtqQROufKNmuqBuBNAYW4QzXGX6B0bDPcjGnMQYJ8Cg12U59oSzaUJQa4IUAXMclDHwAAn/MxPMw765FZd2QRgopBWmsKCrdfhXnS/4ZYElBXdyxewN008Y8AephLAkqz613AAAAAElFTkSuQmCC) }
                 #left-panel li.success { color: #565b60 }
                 #left-panel li.failure { color: red }
@@ -23,7 +24,7 @@
                 #left-panel div.success { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOCAYAAADwikbvAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9sDEBULEEc6wzcAAAAdaVRYdENvbW1lbnQAAAAAAENyZWF0ZWQgd2l0aCBHSU1QZC5lBwAAAiNJREFUKM99kktIVGEYhp/jzJl08lI6logp2Y2EFkbtaqlFROsWrlq4ioJWQRs37VoUVItWkYEVRGSBlhleCpywDEWxTEuxcURTZ6YzxzP/5WshCOHUt36f93kXnyMi5Lsnb4clI4s4fhkXzp5w8mWcfHBvfEpUxVdCUUU6lUPNHuD86cYtBQX5GhPrM7hRg7GaSDRg2vuUd90WuOPVsOyqy6FFo2yOQHlU1S9z9dZT+S/8I7GCLlkAN4eyAf56mnT6Fy1HLnGuuYa++MS/4e74qMRqfXLaJ9BpfnsrLC0m2BYuoqwUbj/+274JD43OEqmexwvW8NUKXnaZtVSS1pNtAAyOvyC6v48HnUNb4Z7PH8UtTlIQWA5tb2RhYY7kz3l2FleytJYg/qWb8t2KZ/0PN+1hgI6uEUr2jpHKpGlquExVaS0VbjUZL7WxaqIXK6ADQ0n9GNfv9XCttWnD/O57t0TKFklnF3g5fJ/seoaa2D4O1x0F4PlgO9oIftbgFgYMfLgjACGqj0vlsddoUnj+Kt/mxunq72RP+UGqYjWMTA7R+b6dUCSEGEF5hoJQip6BaFs4HJtCyRrKs6wHCovDip/kys0WWpovMpOYBCtoT2N9B5uzWG0Zid8gnFrVFEQDtBaUrxEgXBimaEeER2/uIiK4roPOaMRYjBKsFly3fOO3G06dETGCWIsYjckprMphtEKMAQtgsMYi1mJMQHJ6xvkDKQoyphCzkl0AAAAASUVORK5CYII=) }
                 #left-panel div.failure { background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA8AAAAOCAYAAADwikbvAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9sDEBUJOEC5CU8AAAAdaVRYdENvbW1lbnQAAAAAAENyZWF0ZWQgd2l0aCBHSU1QZC5lBwAAAeVJREFUKM+NkDtok2EUhp8vl9ZLo/EyKI6KFgqCKC4OClrBWUQEcRRx1cGpk3WyInWrgoMZKkW8thYaEYQ0i7WC2ngrNDTERHJvkv/L/3//dxwc7F8jeOAsh/c973OOEhG61aPnaen7maXYt4MLZ4+pbppQt+F06jNH3QWOb8pxUs+SmJzjv83hxY8SVy3wNdtVneiHqe54IhLoB4/TUkyMyOrKj5yXoVtPZK02kLyYK7OnlqFWzgcCGtUC/YUJ3n5a/jd28tU7ORTN0myUA6Jms8bpWIa798elqzn1fokjThrpVBC3ETzNbYAuca59j/Hp+b/N869Tsk8tgVMCXQk+RlfQuk1/tMLMwzsSMCcm5zjhvoR2AdpF0GuwO4aqttS05ZSbZHhsBoAIwI83Cdkd/460XDAOG02d24MxvlR8dsUUh3f2UHaEtgdbWCHz4oZwcVCp66PP5FLhKjEc8DXaCMsNy8DYn/SnZ+L0hhWOb/F8yLs9fDtwk8j+VpqwrlC34PrgGEu2bhlYhZ1b8dncq3AMeBaUr/k6NUyk4ChKzu+N2hc6Bqody+WDG8g2fLatD7F3axjPgmvAtYJvIbouhhIRrl0ZktnkBGIt1gqeMXQ8D2MMiCIUCqFEsFhEQMSykCuqX0MzLAUJTzRsAAAAAElFTkSuQmCC) }
                 #left-panel div.detail { display: none }
-                #right-panel { position: absolute; right: 0; top: 0; bottom: 0; left: 301px; overflow: auto; background: white }
+                #right-panel { position: absolute; right: 0; top: 57px; bottom: 0; left: 301px; overflow: auto; background: white }
                 #right-panel .group { font-size: 12px; font-weight: bold; line-height: 16px; padding: 0 0 0 18px; counter-reset: assertion; background-repeat: repeat-x; background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAQCAYAAADXnxW3AAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9sDEBUkDq8pxjkAAAAdaVRYdENvbW1lbnQAAAAAAENyZWF0ZWQgd2l0aCBHSU1QZC5lBwAAADdJREFUCNdVxrERwDAMAzGK0v47eS6Z927SpMFBAAbkvSvnRk5+7K5cVfLMyN39bWakJAjA5xw9R94jN3tVhVEAAAAASUVORK5CYII=) }
                 #right-panel .zebra { background-repeat: repeat; padding: 0 0 0 18px; background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAAmCAYAAAAFvPEHAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9sDEBYWFlNztEcAAAAdaVRYdENvbW1lbnQAAAAAAENyZWF0ZWQgd2l0aCBHSU1QZC5lBwAAABdJREFUCNdjYKAtePv5338mBgYGBpoQAGy1BAJlb/y6AAAAAElFTkSuQmCC) }
                 #right-panel .data { line-height: 19px; white-space: nowrap }
@@ -352,6 +353,10 @@
         </head>
         <body>
 			<div class="Canvas" style="display:none;" id="Canvas0"></div>
+						<div id="top-panel">
+            <xsl:call-template name="summary" />
+						<hr size="1" width="100%" align="center" />
+            </div>
             <div id="left-panel">
 				<a href="javascript:printAllResult();">printAllResult</a>
                 <ol id="result-list">
@@ -438,4 +443,138 @@
         </body>
         </html>
     </xsl:template>
+    
+    <!--以下由smooth00 20181206编辑-->
+
+    <xsl:template name="summary">
+	<h2>Summary</h2>
+	<table align="center" class="details" border="0" cellpadding="5" cellspacing="2" width="100%">
+		<tr valign="top">
+			<th># Samples</th>
+			<th>Failures</th>
+			<th>Success Rate</th>
+			<th>Average Time</th>
+			<th>Min Time</th>
+			<th>Max Time</th>
+			<th>90% Time</th>
+		</tr>
+		<tr valign="top">
+			<xsl:variable name="allCount" select="count(/testResults/*)" />
+			<xsl:variable name="allFailureCount" select="count(/testResults/*[attribute::s='false'])" />
+			<xsl:variable name="allSuccessCount" select="count(/testResults/*[attribute::s='true'])" />
+			<xsl:variable name="allSuccessPercent" select="$allSuccessCount div $allCount" />
+			<xsl:variable name="allTotalTime" select="sum(/testResults/*/@t)" />
+			<xsl:variable name="allAverageTime" select="$allTotalTime div $allCount" />
+			<xsl:variable name="allMinTime">
+				<xsl:call-template name="min">
+					<xsl:with-param name="nodes" select="/testResults/*/@t" />
+				</xsl:call-template>
+			</xsl:variable>
+			<xsl:variable name="allMaxTime">
+				<xsl:call-template name="max">
+					<xsl:with-param name="nodes" select="/testResults/*/@t" />
+				</xsl:call-template>
+			</xsl:variable>
+			<!-- 以下New add 90% line -->  
+            <xsl:variable name="allLineTime">  
+                    <xsl:call-template name="line">  
+                        <xsl:with-param name="nodes" select="/testResults/*/@t" />  
+                    </xsl:call-template>  
+            </xsl:variable>  
+			<xsl:attribute name="class">
+				<xsl:choose>
+					<xsl:when test="$allFailureCount &gt; 0">Failure</xsl:when>
+				</xsl:choose>
+			</xsl:attribute>
+			<td align="center">
+				<xsl:value-of select="$allCount" />
+			</td>
+			<td align="center">
+				<xsl:value-of select="$allFailureCount" />
+			</td>
+			<td align="center">
+				<xsl:call-template name="display-percent">
+					<xsl:with-param name="value" select="$allSuccessPercent" />
+				</xsl:call-template>
+			</td>
+			<td align="center">
+				<xsl:call-template name="display-time">
+					<xsl:with-param name="value" select="$allAverageTime" />
+				</xsl:call-template>
+			</td>
+			<td align="center">
+				<xsl:call-template name="display-time">
+					<xsl:with-param name="value" select="$allMinTime" />
+				</xsl:call-template>
+			</td>
+			<td align="center">
+				<xsl:call-template name="display-time">
+					<xsl:with-param name="value" select="$allMaxTime" />
+				</xsl:call-template>
+			</td>
+			<!-- 以下添加 90% line 显示列 -->  
+            <td align="center">  
+                <xsl:call-template name="display-time">  
+                    <xsl:with-param name="value" select="$allLineTime" />  
+                </xsl:call-template>  
+            </td> 
+		</tr>
+	</table>
+</xsl:template>
+
+<xsl:template name="min">
+	<xsl:param name="nodes" select="/.." />
+	<xsl:choose>
+		<xsl:when test="not($nodes)">NaN</xsl:when>
+		<xsl:otherwise>
+			<xsl:for-each select="$nodes">
+				<xsl:sort data-type="number" />
+				<xsl:if test="position() = 1">
+					<xsl:value-of select="number(.)" />
+				</xsl:if>
+			</xsl:for-each>
+		</xsl:otherwise>
+	</xsl:choose>
+</xsl:template>
+
+<xsl:template name="max">
+	<xsl:param name="nodes" select="/.." />
+	<xsl:choose>
+		<xsl:when test="not($nodes)">NaN</xsl:when>
+		<xsl:otherwise>
+			<xsl:for-each select="$nodes">
+				<xsl:sort data-type="number" order="descending" />
+				<xsl:if test="position() = 1">
+					<xsl:value-of select="number(.)" />
+				</xsl:if>
+			</xsl:for-each>
+		</xsl:otherwise>
+	</xsl:choose>
+</xsl:template>
+
+<!-- New add 90% line -->  
+<xsl:template name="line">  
+    <xsl:param name="nodes" select="/.." />  
+    <xsl:choose>  
+        <xsl:when test="not($nodes)">NaN</xsl:when>  
+        <xsl:otherwise>  
+            <xsl:for-each select="$nodes">  
+                <xsl:sort data-type="number" />  
+                <xsl:if test="position() = floor(last()*0.9)">  
+                    <xsl:value-of select="number(.)" />  
+                </xsl:if>  
+            </xsl:for-each>  
+        </xsl:otherwise>  
+    </xsl:choose>  
+</xsl:template>  
+
+<xsl:template name="display-percent">
+	<xsl:param name="value" />
+	<xsl:value-of select="format-number($value,'0.00%')" />
+</xsl:template>
+
+<xsl:template name="display-time">
+	<xsl:param name="value" />
+	<xsl:value-of select="format-number($value,'0 ms')" />
+</xsl:template>
 </xsl:stylesheet>

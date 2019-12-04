@@ -56,7 +56,7 @@ public class SSH2Utils {
      */
     public void scpPutFile(String filePath, String remotePath) {
         //文件scp到数据服务器
-        Connection conn = new Connection(host, port);
+    	Connection conn = new Connection(host, port);
         try {
             conn.connect();
             boolean isAuthenticated = conn.authenticateWithPassword(user, password);
@@ -102,19 +102,20 @@ public class SSH2Utils {
             returnLine.append(br.readLine());
 
             //得到脚本运行成功与否的标志 ：0－成功 非0－失败
-//            logger.error("ExitCode: " + sess.getExitStatus());
+            //logger.error("ExitCode: " + sess.getExitStatus());
 
             //关闭session和connection
             sess.close();
             conn.close();
         } catch (Exception e) {
-            logger.error("文件scp到数据服务器时发生异常", e);
+        	logger.error("文件scp到数据服务器时发生异常", e);
         } finally {
-            if (sess != null) {
-                sess.close();
+        	if (sess != null) {
+              sess.close();
             }
-            conn.close();
+        	conn.close();
         }
+
         logger.error("执行命令结束 : " + command + "\n返回值：" + returnLine);
         return returnLine.toString();
     }

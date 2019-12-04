@@ -76,11 +76,22 @@ var vm = new Vue({
     el: '#rrapp',
     data: {
         q: {
-            caseId: null
+            caseId: getQueryString('CaseID')
         },
         debugCaseReport: {},
         title: null,
         showList: true
+    },
+    mounted: function () {
+        if (this.q.caseId) {
+            // 如果caseId不为空，说明是从用例页面传入CaseId
+            this.$nextTick(function () {
+                // 加上延时避免 mounted 方法比页面加载早执行
+                setTimeout(function () {
+                    vm.query()
+                }, 500)
+            })
+        }
     },
     methods: {
         query: function () {

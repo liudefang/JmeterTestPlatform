@@ -31,8 +31,8 @@
                     class="fa fa-pencil-square-o"></i>&nbsp;修改</a>
             <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="del"><i class="fa fa-trash-o"></i>&nbsp;删除</a>
             <a v-if="hasPermission('test:stress')" class="btn btn-primary" @click="delCsv"><i class="fa fa-trash-o"></i>&nbsp;仅删除结果文件</a>
-            <!--&nbsp;&nbsp;<input type="button" class="btn btn-warning" @click="back" value="返回"/>-->
             &nbsp;&nbsp;<input type="button" class="btn btn-success" @click="reload" value="刷新"/>
+            &nbsp;&nbsp;<input v-if="getQueryString('CaseID')" type="button" class="btn btn-warning" @click="back" value="返回"/>
         </div>
         <table id="jqGrid"></table>
         <div id="jqGridPager"></div>

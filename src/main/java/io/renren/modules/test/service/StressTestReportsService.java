@@ -51,7 +51,7 @@ public interface StressTestReportsService {
      * 生成测试报告
      */
     void createReport(Long[] reportIds);
-
+    
     /**
      * 生成测试报告
      */

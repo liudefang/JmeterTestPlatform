@@ -33,9 +33,9 @@ import static io.renren.common.utils.ConfigConstant.OS_NAME_LC;
 @Component
 public class StressTestUtils {
 
-    Logger logger = LoggerFactory.getLogger(getClass());
-
-    private static SysConfigService sysConfigService = (SysConfigService) SpringContextUtils.getBean("sysConfigService");
+	Logger logger = LoggerFactory.getLogger(getClass());
+	
+	private static SysConfigService sysConfigService = (SysConfigService) SpringContextUtils.getBean("sysConfigService");
     public static String xslFilePath = "classpath:config/jmeter.results.zyanycall.xsl";
 
     //0：初始状态  1：正在运行  2：成功执行  3：运行出现异常
@@ -65,7 +65,7 @@ public class StressTestUtils {
     public static final Integer NO_NEED_DEBUG = 0;
     public static final Integer NEED_DEBUG = 1;
 
-    //0：禁用  1：启用  2：进行中
+    //0：禁用  1：启用   2：进行中
     public static final Integer DISABLE = 0;
     public static final Integer ENABLE = 1;
     public static final Integer PROGRESSING = 2;
@@ -88,13 +88,13 @@ public class StressTestUtils {
      */
     public static Map<String, String> jMeterStatuses = new HashMap<>();
 
-//    private static String jmeterHome;
+    //private static String jmeterHome;
 
-//    private String casePath;
+    //private String casePath;
 
-//    private boolean useJmeterScript;
+    //private boolean useJmeterScript;
 
-//    private boolean replaceFile = true;
+    //private boolean replaceFile = true;
 
     /**
      * Jmeter在Master节点的绝对路径
@@ -124,7 +124,7 @@ public class StressTestUtils {
      * 对应的，如果为false则使用Jmeter_home的脚本生成测试报告，无法同时生成多个测试报告。
      */
     public final static String MASTER_JMETER_GENERATE_REPORT_KEY = "MASTER_JMETER_GENERATE_REPORT_KEY";
-
+    
     /**
      * 上传文件时，遇到同名文件是替换还是报错，默认是替换为true
      */
@@ -137,24 +137,33 @@ public class StressTestUtils {
      */
     public final static String SCRIPT_SCHEDULER_DURATION_KEY = "SCRIPT_SCHEDULER_DURATION_KEY";
 
+    /**
+     * 上传文件时，是否导入Jmeter脚本的线程组配置，默认是不导入false
+     */
+    public final static String JMETER_THREADGROUP_SET_KEY = "JMETER_THREADGROUP_SET_KEY";
+
     public static String getJmeterHome() {
-        return sysConfigService.getValue(MASTER_JMETER_HOME_KEY);
+    	return sysConfigService.getValue(MASTER_JMETER_HOME_KEY);
     }
 
     public String getCasePath() {
-        return sysConfigService.getValue(MASTER_JMETER_CASES_HOME_KEY);
+    	return sysConfigService.getValue(MASTER_JMETER_CASES_HOME_KEY);
     }
 
     public boolean isUseJmeterScript() {
-        return Boolean.parseBoolean(sysConfigService.getValue(MASTER_JMETER_USE_SCRIPT_KEY));
+    	return Boolean.parseBoolean(sysConfigService.getValue(MASTER_JMETER_USE_SCRIPT_KEY));
     }
 
-    public boolean isReplaceFile() {
-        return Boolean.parseBoolean(sysConfigService.getValue(MASTER_JMETER_REPLACE_FILE_KEY));
+    public int ReplaceFileKey() {
+        return Integer.parseInt(sysConfigService.getValue(MASTER_JMETER_REPLACE_FILE_KEY));
     }
-
+    
     public boolean isMasterGenerateReport() {
         return Boolean.parseBoolean(sysConfigService.getValue(MASTER_JMETER_GENERATE_REPORT_KEY));
+    }
+
+    public boolean isGetThreadGroup() {
+        return Boolean.parseBoolean(sysConfigService.getValue(JMETER_THREADGROUP_SET_KEY));
     }
 
     public boolean isScriptSchedulerDurationEffect() {
@@ -252,7 +261,7 @@ public class StressTestUtils {
     /**
      * 判断当前是否存在正在执行的脚本
      */
-    public static boolean checkExistRunningScript() {
+    public static boolean checkExistRunningScript(){
         for (JmeterRunEntity jmeterRunEntity : jMeterEntity4file.values()) {
             if (jmeterRunEntity.getRunStatus().equals(RUNNING)) {
                 return true;
@@ -300,7 +309,7 @@ public class StressTestUtils {
 
         jmeterProps.put("jmeter.version", JMeterUtils.getJMeterVersion());
     }
-
+    
     /**
      * 为调试模式动态设置Jmeter的结果文件格式，让jtl包含必要的调试信息。
      * 这些信息会显著影响压力机性能，所以仅供调试使用。
@@ -331,7 +340,7 @@ public class StressTestUtils {
         jmeterProps.put("jmeter.save.saveservice.sample_count", "true");
         jmeterProps.put("jmeter.save.saveservice.idle_time", "true");
     }
-
+    
     /**
      * 为测试报告和调试报告提供的删除jmx的生成目录方法。
      * 如果删除的测试报告是测试脚本唯一的测试报告，则将目录也一并删除。
@@ -357,5 +366,4 @@ public class StressTestUtils {
             Thread.currentThread().interrupt();
         }
     }
-
 }

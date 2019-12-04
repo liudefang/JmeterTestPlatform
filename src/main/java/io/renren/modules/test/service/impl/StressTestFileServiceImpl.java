@@ -13,6 +13,7 @@ import io.renren.modules.test.jmeter.JmeterStatEntity;
 import io.renren.modules.test.jmeter.engine.LocalStandardJMeterEngine;
 import io.renren.modules.test.jmeter.runner.LocalDistributedRunner;
 import io.renren.modules.test.service.StressTestFileService;
+import io.renren.modules.test.service.TestStressThreadSetService;
 import io.renren.modules.test.utils.SSH2Utils;
 import io.renren.modules.test.utils.StressTestUtils;
 import org.apache.commons.codec.digest.DigestUtils;
@@ -30,6 +31,7 @@ import org.apache.jmeter.services.FileServer;
 import org.apache.jmeter.threads.RemoteThreadsListenerTestElement;
 import org.apache.jmeter.threads.ThreadGroup;
 import org.apache.jorphan.collections.HashTree;
+import org.dom4j.DocumentException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,8 +55,11 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
     private static final String JAVA_CLASS_PATH = "java.class.path";
     private static final String CLASSPATH_SEPARATOR = File.pathSeparator;
+
     private static final String OS_NAME = System.getProperty("os.name");// $NON-NLS-1$
-    private static final String OS_NAME_LC = OS_NAME.toLowerCase(Locale.ENGLISH);
+
+    private static final String OS_NAME_LC = OS_NAME.toLowerCase(java.util.Locale.ENGLISH);
+
     private static final String JMETER_INSTALLATION_DIRECTORY;
 
     /**
@@ -151,6 +156,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     @Autowired
     private StressTestUtils stressTestUtils;
 
+    @Autowired
+    private TestStressThreadSetDao testStressThreadSetDao;
+
+    @Autowired
+    private TestStressThreadSetService testStressThreadSet;
+
     @Override
     public StressTestFileEntity queryObject(Long fileId) {
         return stressTestFileDao.queryObject(fileId);
@@ -197,11 +208,24 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             stressTestFile.setAddTime(new Date());
             update(stressTestFile);
         } else {
+        	// 保存文件，同时解决第一次保存文件时实体没有写入用例名称
+        	stressTestFile.setCaseName(stressCase.getCaseName());
             save(stressTestFile);
         }
         // 肯定存在已有的用例信息
         stressTestDao.update(stressCase);
         stressTestUtils.saveFile(multipartFile, filePath);
+        // 对jmx脚本将线程组配置信息入库(默认不入库)
+        if(stressTestUtils.isGetThreadGroup() && filePath.substring(filePath.length()-3).equals("jmx")){
+        	try {
+        		//入库前清理已有配置项
+        		testStressThreadSetDao.deleteByFileId(stressTestFile.getFileId());
+    			testStressThreadSet.jmxSaveNodes(filePath, stressTestFile);
+    		} catch (DocumentException e) {
+    			// TODO Auto-generated catch block
+    			e.printStackTrace();
+    		}
+        }
     }
 
     @Override
@@ -214,7 +238,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     public void update(StressTestFileEntity stressTestFile, StressTestReportsEntity stressTestReports) {
         update(stressTestFile);
         if (stressTestReports != null) {
-            if (stressTestReports instanceof DebugTestReportsEntity) {
+        	if (stressTestReports instanceof DebugTestReportsEntity) {
                 debugTestReportsDao.update((DebugTestReportsEntity) stressTestReports);
             } else {
                 stressTestReportsDao.update(stressTestReports);
@@ -294,6 +318,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         });
 
         stressTestFileDao.deleteBatch(fileIds);
+        testStressThreadSetDao.deleteBatchByFileIds(fileIds);//删除脚本关联的线程组配置信息
     }
 
     /**
@@ -314,6 +339,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      * 脚本的启动都是新的线程，其中的SQL是不和启动是同一个事务的。
      * 同理，也不会回滚这一事务。
      */
+    @Override
     public String runSingle(Long fileId) {
         StressTestFileEntity stressTestFile = queryObject(fileId);
         if (StressTestUtils.RUNNING.equals(stressTestFile.getStatus())) {
@@ -341,13 +367,13 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
         StressTestReportsEntity stressTestReports = null;
         if (StressTestUtils.NEED_REPORT.equals(stressTestFile.getReportStatus())) {
-            // 如果是需要调试的情况下
+        	// 如果是需要调试的情况下
             if (StressTestUtils.NEED_DEBUG.equals(stressTestFile.getDebugStatus())) {
                 stressTestReports = new DebugTestReportsEntity();
             } else {
                 stressTestReports = new StressTestReportsEntity();
             }
-
+            
             //保存测试报告stressTestReportsDao
             stressTestReports.setCaseId(stressTestFile.getCaseId());
             stressTestReports.setFileId(fileId);
@@ -359,15 +385,20 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         Map map = new HashMap();
         map.put("jmxFile", jmxFile);
         map.put("csvFile", csvFile);
-
+        
         String slaveStr = getSlaveIPPort();
         // slaveStr用来做脚本是否是分布式执行的判断，不入库。
         stressTestFile.setSlaveStr(slaveStr);
 
-        if (stressTestUtils.isUseJmeterScript()) {
-            excuteJmeterRunByScript(stressTestFile, stressTestReports, map);
-        } else {
-            excuteJmeterRunLocal(stressTestFile, stressTestReports, map);
+        try {
+            if (stressTestUtils.isUseJmeterScript()) {
+                excuteJmeterRunByScript(stressTestFile, stressTestReports, map);
+            } else {
+                excuteJmeterRunLocal(stressTestFile, stressTestReports, map);
+            }
+        }catch(RRException e) {
+            // 解决BUG：分布式情况下禁止调试，却无法在前端提示。修复后会提示用户“请关闭调试模式！”
+            return e.getMsg();
         }
 
         //保存文件的执行状态，用于前台提示及后端查看排序。
@@ -376,16 +407,19 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         update(stressTestFile);
 
         if (stressTestReports != null) {
-            // 将调试测试报告放到调试的数据表中记录
+        	// 将调试测试报告放到调试的数据表中记录
             if (stressTestReports instanceof DebugTestReportsEntity) {
-                debugTestReportsDao.save((DebugTestReportsEntity) stressTestReports);
+                debugTestReportsDao.save((DebugTestReportsEntity)stressTestReports);
             } else {
                 stressTestReportsDao.save(stressTestReports);
             }
         }
-
+        
         if (StringUtils.isNotEmpty(slaveStr)) {
-            return "分布式压测开始！节点机为：" + slaveStr + " 共 " + slaveStr.split(",").length + " 个节点";
+        	if(checkSlaveLocal()){
+        		return "分布式压测开始！节点机为：" + slaveStr + ",Local节点" + "  共 " + (slaveStr.split(",").length + 1) + " 个节点";
+        	}
+            return "分布式压测开始！节点机为：" + slaveStr + "  共 " + slaveStr.split(",").length + " 个节点";
         }
         return "master主机压测开始！";
     }
@@ -395,14 +429,14 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      */
     public void excuteJmeterRunByScript(StressTestFileEntity stressTestFile,
                                         StressTestReportsEntity stressTestReports, Map map) {
-        // 由于调试模式需要动态修改测试结果保存样式为JTL，而性能测试报告需要的格式为CSV（压测系统默认模式）。
+    	// 由于调试模式需要动态修改测试结果保存样式为JTL，而性能测试报告需要的格式为CSV（压测系统默认模式）。
         // 所以调试模式下如果运行脚本则无法生成测试报告，造成系统功能缺失。
         // 为避免后续问题，jmx如果使用了调试，则无法使用脚本方式运行。
         if (StressTestUtils.NEED_DEBUG.equals(stressTestFile.getDebugStatus())) {
-            throw new RRException("请禁用调试模式！");
+            throw new RRException("不支持在分布式slave节点调试，请关闭调试模式！");
         }
-
-        String jmeterHomeBin = stressTestUtils.getJmeterHomeBin();
+    	
+    	String jmeterHomeBin = stressTestUtils.getJmeterHomeBin();
         String jmeterExc = stressTestUtils.getJmeterExc();
         CommandLine cmdLine = new CommandLine(jmeterHomeBin + File.separator + jmeterExc);
         // 设置参数，-n 命令行模式
@@ -460,12 +494,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         File csvFile = (File) map.get("csvFile");
 
         try {
-            String slaveStr = stressTestFile.getSlaveStr();
-
+        	String slaveStr = stressTestFile.getSlaveStr();
+        	
             stressTestUtils.setJmeterProperties();
             if (StressTestUtils.NEED_DEBUG.equals(stressTestFile.getDebugStatus())) {
                 if (StringUtils.isNotEmpty(slaveStr)) {//分布式的方式启动
-                    throw new RRException("不支持分布式slave节点的调试！请关闭此脚本的分布式再试一试！");
+                    throw new RRException("不支持在分布式slave节点调试，请关闭调试模式！");
                 }
                 stressTestUtils.setJmeterOutputFormat();
             }
@@ -497,12 +531,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                 // 具体情况的区分在其程序内做分别，原因是情况较多，父子类的实现不现实。
                 // 使用自定义的Collector，用于前端绘图的数据收集和日志收集等。
                 jmeterResultCollector = new JmeterResultCollector(stressTestFile);
-
+                
                 // 对调试模式的处理，让结果文件保存为xml格式
                 if (StressTestUtils.NEED_DEBUG.equals(stressTestFile.getDebugStatus())) {
                     jmeterResultCollector.getSaveConfig().setAsXml(true);
                 }
-
+                
                 jmeterResultCollector.setFilename(csvFile.getPath());
                 jmxTree.add(jmxTree.getArray()[0], jmeterResultCollector);
             }
@@ -540,7 +574,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
             StressTestUtils.jMeterEntity4file.put(stressTestFile.getFileId(), jmeterRunEntity);
             if (StringUtils.isNotEmpty(slaveStr)) {//分布式的方式启动
-                StringTokenizer st = new StringTokenizer(slaveStr, ",");//$NON-NLS-1$
+                java.util.StringTokenizer st = new java.util.StringTokenizer(slaveStr, ",");//$NON-NLS-1$
                 List<String> hosts = new LinkedList<>();
                 while (st.hasMoreElements()) {
                     hosts.add((String) st.nextElement());
@@ -559,12 +593,12 @@ public class StressTestFileServiceImpl implements StressTestFileService {
                     JMeterEngine engine = new LocalStandardJMeterEngine(stressTestFile);
                     engine.configure(jmxTree);
                     engine.runTest();
-//                    Object engine = engineRun(stressTestFile, jmxTree);
+                    // Object engine = engineRun(stressTestFile, jmxTree);
                     engines.add((JMeterEngine) engine);
                 }
             } else {//本机运行
                 // JMeterEngine 本身就是线程，启动即为异步执行，resultCollector会监听保存csv文件。
-//                Object engine = engineRun(stressTestFile, jmxTree);
+            	// Object engine = engineRun(stressTestFile, jmxTree);
                 JMeterEngine engine = new LocalStandardJMeterEngine(stressTestFile);
                 engine.configure(jmxTree);
                 engine.runTest();
@@ -595,7 +629,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
     }
 
     /**
-     * 增加脚本默认执行时间的添加。
+     * 增加脚本默认执行时间的添加（只针对永远循环执行的线程组）。
      * 目的是避免脚本忘了停止，执行时间过长，造成灾难性后果。
      */
     public HashTree fixHashTreeDuration(HashTree jmxTree, StressTestFileEntity stressTestFile) {
@@ -603,7 +637,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
             for (HashTree item : jmxTree.values()) {
                 Set treeKeys = item.keySet();
                 for (Object key : treeKeys) {
-                    if (key instanceof ThreadGroup) {
+                    if (key instanceof ThreadGroup && ((ThreadGroup) key).getDuration() == 0 ) {
                         ((ThreadGroup) key).setProperty(ThreadGroup.SCHEDULER, true);
                         ((ThreadGroup) key).setProperty(ThreadGroup.DURATION, stressTestFile.getDuration());
                     }
@@ -628,6 +662,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
      * 脚本的启动都是新的线程，其中的SQL是不和启动是同一个事务的。
      * 同理，也不会回滚这一事务。
      */
+    @Override
     public void stopSingle(Long fileId) {
         if (stressTestUtils.isUseJmeterScript()) {
             throw new RRException("Jmeter脚本启动不支持单独停止，请使用全部停止！");
@@ -656,7 +691,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
         // 只处理了成功的情况，失败的情况当前捕获不到。
         stressTestFile.setStatus(StressTestUtils.RUN_SUCCESS);
-        // 全面停止之前将测试报告文件从缓存刷到磁盘上去。
+    	// 全面停止之前将测试报告文件从缓存刷到磁盘上去。
         // 避免多脚本执行时停止其中一个脚本而测试报告文件不完整。
         if (jmeterResultCollector != null) {
             // 如果关闭报告，则为null
@@ -813,7 +848,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
         if (fileSaveMD5.equals(MD5)) {//说明目标服务器已经存在相同文件不再重复上传
             return;
         }
-
+   
         //上传文件
         ssh2Util.scpPutFile(filePath, caseFileHome);
 
@@ -884,6 +919,7 @@ public class StressTestFileServiceImpl implements StressTestFileService {
 
             SSH2Utils ssh2Util = new SSH2Utils(slave.getIp(), slave.getUserName(),
                     slave.getPasswd(), Integer.parseInt(slave.getSshPort()));
+
             ssh2Util.runCommand("rm -f " + getSlaveFileName(stressTestFile, slave));
         }
 

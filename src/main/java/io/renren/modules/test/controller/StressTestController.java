@@ -76,9 +76,9 @@ public class StressTestController {
     public R upload(@RequestParam("files") MultipartFile multipartFile, MultipartHttpServletRequest request) {
 
         if (multipartFile.isEmpty()) {
-            // 为了前端fileinput组件提示使用。
+            //throw new RRException("上传文件不能为空");
+        	// 为了前端fileinput组件提示使用。
             return R.ok().put("error","上传文件不能为空");
-//            throw new RRException("上传文件不能为空");
         }
 
         String originName = multipartFile.getOriginalFilename();
@@ -86,8 +86,8 @@ public class StressTestController {
         //用例的参数化文件不允许包含汉字,避免Linux系统读取文件报错.
         String suffix = originName.substring(originName.lastIndexOf("."));
         if (!".jmx".equalsIgnoreCase(suffix) && originName.length() != originName.getBytes().length) {
-            return R.ok().put("error","非脚本文件名不能包含汉字");
-//            throw new RRException("非脚本文件名不能包含汉字");
+            //throw new RRException("非脚本文件名不能包含汉字");
+        	return R.ok().put("error","非脚本文件名不能包含汉字");
         }
 
         String caseId = request.getParameter("caseIds");
@@ -97,21 +97,26 @@ public class StressTestController {
         String casePath = stressTestUtils.getCasePath();
 
         Map<String, Object> query = new HashMap<String, Object>();
+        if (2 == stressTestUtils.ReplaceFileKey()) {
+            // caseId加入搜索条件，允许在不同用例间上传同名文件
+            query.put("caseId", caseId);
+        }
         query.put("originName", originName);
         // fileList中最多有一条记录
         List<StressTestFileEntity> fileList = stressTestFileService.queryList(query);
         //数据库中已经存在同名文件
         if (!fileList.isEmpty()) {
             // 不允许上传同名文件
-            if (!stressTestUtils.isReplaceFile()) {
-                return R.ok().put("error","系统中已经存在此文件记录！不允许上传同名文件！");
-//                throw new RRException("系统中已经存在此文件记录！不允许上传同名文件！");
+            if (0 == stressTestUtils.ReplaceFileKey()) {
+                //throw new RRException("系统中已经存在此文件记录！不允许上传同名文件！");
+            	return R.ok().put("error","系统中已经存在此文件记录！不允许上传同名文件！");
             } else {// 允许上传同名文件方式是覆盖。
                 for (StressTestFileEntity stressCaseFile : fileList) {
-                    // 如果是不同用例，但是要上传同名文件，是不允许的，这是数据库的唯一索引要求的。
-                    if (Long.valueOf(caseId) != stressCaseFile.getCaseId()) {
-                        return R.ok().put("error","其他用例已经包含此同名文件！");
-//                        throw new RRException("其他用例已经包含此同名文件！");
+                    // 就算是不同用例下，也不允许上传同名文件。
+                    if (stressTestUtils.ReplaceFileKey() != 2
+                            && Long.valueOf(caseId) != stressCaseFile.getCaseId()) {
+                        //throw new RRException("其他用例已经包含此同名文件！");
+                    	return R.ok().put("error","其他用例已经包含此同名文件！");
                     }
                     // 目的是从名称上严格区分脚本。而同名脚本不同项目模块甚至标签
                     String filePath = casePath + File.separator + stressCaseFile.getFileName();
@@ -202,14 +207,14 @@ public class StressTestController {
     public R delete(@RequestBody Long[] caseIds) {
         // 先删除其下的脚本文件。
         for (Long caseId : caseIds) {
-            ArrayList fileIdList = new ArrayList();
             List<StressTestFileEntity> fileList = stressTestFileService.queryList(caseId);
-            for (StressTestFileEntity stressTestFile : fileList) {
-                fileIdList.add(stressTestFile.getFileId());
-            }
-            if (!fileIdList.isEmpty()) {
+            if(!fileList.isEmpty()){ //判断是否有关联脚本文件
+            	ArrayList fileIdList = new ArrayList();
+            	for (StressTestFileEntity stressTestFile : fileList) {
+                    fileIdList.add(stressTestFile.getFileId());
+                }
                 stressTestFileService.deleteBatch(fileIdList.toArray());
-            }
+            }  
         }
         // 后删除用例
         if (caseIds.length > 0) {

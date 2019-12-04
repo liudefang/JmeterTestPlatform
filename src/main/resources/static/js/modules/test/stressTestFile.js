@@ -1,11 +1,24 @@
 $(function () {
+    $("#cron").cronGen({
+        direction : 'right'
+    });
     $("#jqGrid").jqGrid({
         url: baseURL + 'test/stressFile/list',
         datatype: "json",
         colModel: [
             {label: '文件ID', name: 'fileId', width: 30, key: true},
             // {label: '用例ID', name: 'caseId', width: 35},
-            {label: '用例名称', name: 'caseName', width: 35, sortable: false},
+            {label: '用例名称', name: 'caseName', width: 35, sortable: false,
+                formatter: function (value, options, row) {
+                    if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
+                        return value;
+                    }
+                    if (row.debugStatus == 1)
+                        return "<a href='"+ baseURL +"modules/test/debugTestReports.html?CaseID=" + row.caseId + "' title='"+value+" 调试报告'>" + value + "</a>";
+                    else
+                        return "<a href='"+ baseURL +"modules/test/stressTestReports.html?CaseID=" + row.caseId + "' title='"+value+" 测试报告'>" + value + "</a>";
+                }
+            },
             {
                 label: '文件名称',
                 name: 'originName',
@@ -16,7 +29,7 @@ $(function () {
                         return value;
                     }
                     return "<a href='javascript:void(0);' onclick='" +
-                        "ShowRunning(" + row.fileId + ")'>" + value + "</a>";
+                        "ShowRunning(" + row.fileId + ")' title='" + value + " 压测监控'>" + value + "</a>";
                 }
             },
             {label: '添加时间', name: 'addTime', width: 70},
@@ -55,7 +68,7 @@ $(function () {
                 }
             },
             {
-                label: '调试',
+            	label: '调试',
                 name: 'debugStatus',
                 width: 30,
                 sortable: false,
@@ -71,13 +84,7 @@ $(function () {
                 }
             },
             {
-                label: '持续时间',
-                name: 'duration',
-                width: 45,
-                sortable: false
-            },
-            {
-                label: '状态', name: 'status', width: 45, formatter: function (value, options, row) {
+                label: '状态', name: 'status', width: 40, formatter: function (value, options, row) {
                     if (value === 0) {
                         return '<span class="label label-info">创建成功</span>';
                     } else if (value === 1) {
@@ -93,7 +100,7 @@ $(function () {
                 }
             },
             {
-                label: '执行操作', name: '', width: 70, sortable: false, formatter: function (value, options, row) {
+            	label: '执行操作', name: '', width: 100, sortable: false, formatter: function (value, options, row) {
                     var btn = '';
                     if (!(getExtension(row.originName) && /^(jmx)$/.test(getExtension(row.originName).toLowerCase()))) {
                         btn = "<a href='#' class='btn btn-primary' onclick='synchronizeFile(" + row.fileId + ")' ><i class='fa fa-arrow-circle-right'></i>&nbsp;同步文件</a>";
@@ -112,7 +119,7 @@ $(function () {
             }
         ],
         viewrecords: true,
-        height: $(window).height() - 150,
+        height: $(window).height() - 180,
         rowNum: 50,
         rowList: [10, 30, 50, 100, 200],
         rownumbers: true,
@@ -142,13 +149,27 @@ var vm = new Vue({
     el: '#rrapp',
     data: {
         q: {
-            caseId: null
+            caseId: getQueryString('CaseID')
         },
         stressTestFile: {},
         title: null,
         showChart: false,
         showList: true,
-        showEdit: false
+        showEdit: false,
+        showTask: false,
+        showCronManual: false,
+        showCronGenerate: false
+    },
+    mounted: function () {
+        if (this.q.caseId) {
+            // 如果caseId不为空，说明是从用例页面传入CaseId
+            this.$nextTick(function () {
+                // 加上延时避免 mounted 方法比页面加载早执行
+                setTimeout(function () {
+                vm.query()
+            }, 500)
+        })
+        }
     },
     methods: {
         query: function () {
@@ -166,17 +187,23 @@ var vm = new Vue({
             vm.showList = false;
             vm.showChart = false;
             vm.showEdit = true;
+            vm.showTask = false;
             vm.title = "配置";
             if (fileIds.length > 1) {
                 vm.stressTestFile.reportStatus = 0;
                 vm.stressTestFile.webchartStatus = 0;
                 vm.stressTestFile.debugStatus = 0;
-                vm.stressTestFile.duration = 10800;
+                vm.stressTestFile.duration = 14400;
                 vm.stressTestFile.fileIdList = fileIds;
             } else {
                 var fileId = fileIds[0];
                 $.get(baseURL + "test/stressFile/info/" + fileId, function (r) {
-                    vm.stressTestFile = r.stressTestFile;
+                    if(/^(jmx)$/.test(getExtension(r.stressTestFile.originName).toLowerCase())) {
+                        vm.stressTestFile = r.stressTestFile;
+                    } else {
+                        alert(r.stressTestFile.originName + " 不是脚本，请重新选择！");
+                        vm.reload();
+                    }
                 });
             }
         },
@@ -266,6 +293,7 @@ var vm = new Vue({
             vm.showChart = false;
             vm.showList = true;
             vm.showEdit = false;
+            vm.showTask = false;
             var page = $("#jqGrid").jqGrid('getGridParam', 'page');
             $("#jqGrid").jqGrid('setGridParam', {
                 postData: {'caseId': vm.q.caseId},
@@ -273,6 +301,27 @@ var vm = new Vue({
             }).trigger("reloadGrid");
             // clearInterval 是自带的函数。
             clearInterval(timeTicket);
+        },
+        validator: function () {
+            if(isBlank(vm.stressTestFile.params)){
+                alert("参数不能为空");
+                return true;
+            }
+
+            var cronExpression = vm.stressTestFile.cronExpression;
+            if(isBlank(cronExpression)){
+                alert("cron表达式不能为空");
+                return true;
+            }
+
+            //正则表达式判断不了过多指定时间的情况，只能把过多指定时间替换/(,(\S*),)/成两个指定时间
+            var repCronExpression = cronExpression.replace(/(,[\d,]+,)/,',').
+            replace(/(,[\d,]+,)/,',').replace(/(,[\d,]+,)/,',').
+            replace(/(,[\d,]+,)/,',').replace(/(,[\d,]+,)/,',');
+            if(!isCron(repCronExpression)){
+                alert("cron格式不支持，请检查，并注意不要指定周和年时间！");
+                return true;
+            }
         },
         suspendEcharts: function (event) {
             clearInterval(timeTicket);
@@ -282,6 +331,105 @@ var vm = new Vue({
         },
         clearEcharts: function (event) {
             clearEcharts();
+        },
+        addTask: function(){
+            var fileIds = getSelectedRows();
+            if (fileIds == null) {
+                return;
+            } else {
+                for(var i in fileIds){
+                    $.get(baseURL + "test/stressFile/info/" + fileIds[i], function (r) {
+                        if (!(getExtension(r.stressTestFile.originName) &&
+                            /^(jmx)$/.test(getExtension(r.stressTestFile.originName).toLowerCase()))) {
+                            alert(r.stressTestFile.originName + '非测试脚本，禁止加为任务！');
+                            vm.reload();
+                        } else {
+                            if(1 == r.stressTestFile.status){
+                                alert(r.stressTestFile.originName + '正在运行，禁止加为任务！');
+                                vm.reload();
+                            }
+                        }
+                    });
+                }
+            }
+            vm.showList = false;
+            vm.showTask = true;
+            vm.showCronManual = true;
+            vm.showCronGenerate = false;
+            vm.title = "添加任务";
+            vm.stressTestFile = {beanName: 'stressTestTask', methodName: 'stressTest', params: fileIds.toString(), cronEditType: 0};
+        },
+        threadSet: function(){
+            var fileIds = getSelectedRows();
+            var isAllJmxs = true;
+            if (fileIds == null) {
+                return;
+            } else {
+                for(var i in fileIds){
+                    $.get(baseURL + "test/stressFile/info/" + fileIds[i], function (r) {
+                        if (!(getExtension(r.stressTestFile.originName) &&
+                            /^(jmx)$/.test(getExtension(r.stressTestFile.originName).toLowerCase()))) {
+                            isAllJmxs = false;
+                            alert(r.stressTestFile.originName + '非脚本文件，不能修改线程组！');
+                            vm.reload();
+                        } else {
+                            if(1 == r.stressTestFile.status){
+                                isAllJmxs = false;
+                                alert(r.stressTestFile.originName + '正在运行，禁止修改线程组！');
+                                vm.reload();
+                            }
+                            setTimeout(function (){
+                                if (isAllJmxs && i == fileIds.length-1) {
+                                    window.location.href= baseURL +"modules/test/stressThreadSet.html?FileIDs=" + fileIds;
+                                }
+                            }, 200);
+                        }
+                    });
+                }
+            }
+        },
+        chkCronEditType: function () {
+            if(1 == vm.stressTestFile.cronEditType){
+                vm.showCronManual = false;
+                vm.showCronGenerate = true;
+            }else{
+                vm.showCronManual = true;
+                vm.showCronGenerate = false;
+            }
+        },
+        queryTask: function () {
+            window.location.href = baseURL + "modules/job/schedule.html?BeanName=stressTestTask";
+        },
+        saveTask: function () {
+            if(1 == vm.stressTestFile.cronEditType){
+                vm.stressTestFile.cronExpression = $("#cron").val();
+            }
+            if(vm.validator()){
+                return ;
+            }
+            var schedule = {
+                beanName: vm.stressTestFile.beanName,
+                methodName: vm.stressTestFile.methodName,
+                params: vm.stressTestFile.params,
+                cronExpression: vm.stressTestFile.cronExpression,
+                remark: vm.stressTestFile.remark
+            };
+            var url = "sys/schedule/save";
+            $.ajax({
+                type: "POST",
+                url: baseURL + url,
+                contentType: "application/json",
+                data: JSON.stringify(schedule),
+                success: function(r){
+                    if(r.code === 0){
+                        alert('操作成功', function(){
+                            vm.reload();
+                        });
+                    }else{
+                        alert(r.msg);
+                    }
+                }
+            });
         }
     }
 });
@@ -298,9 +446,9 @@ function runOnce(fileIds) {
         success: function (r) {
             if (r.code == 0) {
                 vm.reload();
+                alert(r.msg, function () {
+                });
             }
-            alert(r.msg, function () {
-            });
         }
     });
 }
@@ -499,7 +647,6 @@ function getOptionLine(map, legendData, dataObj, areaStyle) {
     return returnOption;
 }
 
-
 function getOptionPie(map, legendData, dataObj, areaStyle) {
     // runLabel是图形的题标内容，如[某某成功总数，某某失败总数]
     // dataObj是实际的内容值，在折线图是 内容标题：内容值，在饼图是 value：内容值，name：内容标题
@@ -548,7 +695,6 @@ function getOptionPie(map, legendData, dataObj, areaStyle) {
     return returnOption;
 }
 
-
 setEChartSize();
 var responseTimesEChart = echarts.init(document.getElementById('responseTimesChart'), 'shine');
 var throughputEChart = echarts.init(document.getElementById('throughputChart'), 'shine');
@@ -584,7 +730,7 @@ function setEChartSize() {
     $("#totalCountsChart").css('width', $("#rrapp").width() * 0.95).css('height', $("#rrapp").width() / 3);
 }
 
-// 指定折线图表的配置项和数据
+//指定折线图表的配置项和数据
 var optionLine = {
     tooltip: {
         trigger: 'axis'
@@ -647,8 +793,7 @@ var optionLine = {
     ]
 };
 
-
-// 指定饼图的配置项和数据
+//指定饼图的配置项和数据
 var optionPie = {
     tooltip: {
         trigger: 'item',
@@ -672,7 +817,6 @@ var optionPie = {
         }
     ]
 };
-
 
 // 使用刚指定的配置项和数据显示图表。
 responseTimesEChart.setOption(optionLine);

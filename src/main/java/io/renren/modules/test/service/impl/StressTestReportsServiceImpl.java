@@ -11,11 +11,9 @@ import org.apache.commons.exec.CommandLine;
 import org.apache.commons.exec.DefaultExecutor;
 import org.apache.commons.exec.PumpStreamHandler;
 import org.apache.commons.io.FileUtils;
-import org.apache.jmeter.JMeter;
 import org.apache.jmeter.report.config.ConfigurationException;
 import org.apache.jmeter.report.dashboard.GenerationException;
-import org.apache.jmeter.report.dashboard.ReportGenerator;
-import org.apache.jmeter.util.JMeterUtils;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -184,7 +182,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
      * 递归打包文件夹/文件
      */
     public void zip(ZipOutputStream zOut, File file, String name) throws IOException {
-        if (file.isDirectory()) {
+    	if (file.isDirectory()) {
             File[] listFiles = file.listFiles();
             name += "/";
             zOut.putNextEntry(new ZipEntry(name));
@@ -220,7 +218,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
             createReport(stressTestReport);
         }
     }
-
+    
     /**
      * 生成测试报告
      */
@@ -241,14 +239,14 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
         //设置开始执行命令生成报告
         stressTestReport.setStatus(StressTestUtils.RUNNING);
         update(stressTestReport);
-
+        
         if (stressTestUtils.isMasterGenerateReport()) {
             generateReportLocal(stressTestReport, csvPath, reportPathDir);
         } else {
             generateReportByScript(stressTestReport, csvPath, reportPathDir);
         }
     }
-
+    
     /**
      * 使用本进程多线程生成测试报告。
      */
@@ -320,11 +318,11 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
      *
      * @param fileName csv 文件
      */
-    public void fixReportFile(String fileName) {
+    public void fixReportFile(String fileName){
         // 需要增加判断，如果是不完整的最后一行，属于脏数据，则删除这条数据。
         // 如果是完整的，则直接跳出不执行删除操作。
         try {
-            RandomAccessFile raf = new RandomAccessFile(fileName, "rw");
+            RandomAccessFile raf = new RandomAccessFile(fileName,"rw");
             if (raf.length() == 0L) {
                 logger.error("测试报告原始csv文件为空，可以删除！");
                 throw new RRException("测试报告原始文件找不到，请删除！");
@@ -368,10 +366,10 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
      * 本身文件是从后向前做循环，所以多次调用并不会增加过多的性能时间损耗。
      * 默认是UTF-8的编码
      *
-     * @param raf      原始文件
-     * @param posEnd   要截取数据行的在文件中结束的位置
-     * @param posStart 要截取数据行的开始的位置
-     * @return 返回一行数据
+     * @param raf  原始文件
+     * @param posEnd 要截取数据行的在文件中结束的位置
+     * @param posStart  要截取数据行的开始的位置
+     * @return  返回一行数据
      * @throws IOException
      */
     public String getLineStr(RandomAccessFile raf, long posEnd, long posStart) throws IOException {
@@ -384,7 +382,7 @@ public class StressTestReportsServiceImpl implements StressTestReportsService {
      * 获取要截取数据行的开始的位置
      * 是从文本的最后开始向前找，找到换行符\n之后即停止，返回位置。
      * 该位置其他调用方法会遇到，会作为起点。
-     * <p>
+     *
      * 同时由于是从文本的最后向前寻找，所以csv文本是脏数据，最后一行不包含\n，也会找到最后一行。
      */
     public long getPos(RandomAccessFile raf, long posStart) throws IOException {

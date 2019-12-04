@@ -1,8 +1,8 @@
 package io.renren.modules.test.jmeter.fix;
 
 import io.renren.common.exception.RRException;
-import io.renren.modules.test.entity.StressTestFileEntity;
 import org.apache.ibatis.javassist.*;
+import io.renren.modules.test.entity.StressTestFileEntity;
 import org.apache.jorphan.collections.HashTree;
 
 import java.lang.reflect.InvocationTargetException;
@@ -114,5 +114,4 @@ public class JavassistEngine {
         }
         return engine;
     }
-
 }

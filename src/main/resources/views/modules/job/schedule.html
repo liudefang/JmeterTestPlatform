@@ -33,10 +33,11 @@
 			<a v-if="hasPermission('sys:schedule:pause')" class="btn btn-primary" @click="pause"><i class="fa fa-pause"></i>&nbsp;暂停</a>
 			<a v-if="hasPermission('sys:schedule:resume')" class="btn btn-primary" @click="resume"><i class="fa fa-play"></i>&nbsp;恢复</a>
 			<a v-if="hasPermission('sys:schedule:run')" class="btn btn-primary" @click="runOnce"><i class="fa fa-arrow-circle-right"></i>&nbsp;立即执行</a>
+			&nbsp;&nbsp;<input v-if="getQueryString('BeanName')" type="button" class="btn btn-warning" @click="function(){history.go(-1);}" value="返回"/>
 			<a v-if="hasPermission('sys:schedule:log')" class="btn btn-danger" style="float:right;" href="schedule_log.html">日志列表</a>
 		</div>
 	    <table id="jqGrid"></table>
-	    <div id="jqGridPager"></div>
+		<div id="jqGridPager"></div>
 	</div>
 	
 	<div v-show="!showList" class="panel panel-default">

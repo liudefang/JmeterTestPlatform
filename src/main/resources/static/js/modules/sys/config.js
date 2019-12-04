@@ -3,10 +3,10 @@ $(function () {
         url: baseURL + 'sys/config/list',
         datatype: "json",
         colModel: [			
-			{ label: 'ID', name: 'id', width: 30, key: true },
+			{ label: 'ID', name: 'id', width: 10, key: true },
 			{ label: '参数名', name: 'key', width: 60 },
-			{ label: '参数值', name: 'value', width: 100 },
-			{ label: '备注', name: 'remark', width: 80 }
+			{ label: '参数值', name: 'value', width: 80 },
+			{ label: '备注', name: 'remark', width: 120 }
         ],
 		viewrecords: true,
         height: 385,

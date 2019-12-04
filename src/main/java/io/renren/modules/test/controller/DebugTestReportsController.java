@@ -97,7 +97,7 @@ public class DebugTestReportsController {
     @RequestMapping("/createReport")
     @RequiresPermissions("test:debug:reportCreate")
     public R createReport(@RequestBody Long[] reportIds) {
-        for (Long reportId : reportIds) {
+    	for (Long reportId : reportIds) {
             DebugTestReportsEntity debugTestReport = debugTestReportsService.queryObject(reportId);
             debugTestReport.setStatus(StressTestUtils.RUNNING);
             debugTestReportsService.update(debugTestReport);

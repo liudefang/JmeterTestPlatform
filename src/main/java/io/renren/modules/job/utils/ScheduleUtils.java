@@ -68,6 +68,8 @@ public class ScheduleUtils {
             }
         } catch (SchedulerException e) {
             throw new RRException("创建定时任务失败", e);
+        } catch (Exception ex){
+            throw new RRException("构建异常，请检查Cron格式，并禁止指定周和年！");
         }
     }
     

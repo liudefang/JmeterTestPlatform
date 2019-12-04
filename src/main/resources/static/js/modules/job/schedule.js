@@ -46,12 +46,24 @@ var vm = new Vue({
 	el:'#rrapp',
 	data:{
 		q:{
-			beanName: null
+			beanName: getQueryString('BeanName')
 		},
 		showList: true,
 		title: null,
 		schedule: {}
 	},
+    mounted() {
+        if (this.q.beanName) {
+            // 如果beanName不为空，说明是从脚本管理页面传入BeanName
+            this.$nextTick(() => {
+                // 加上延时避免 mounted 方法比页面加载早执行
+                setTimeout(() => {
+                //this.$refs.queryResult.click()
+                this.query()
+            }, 100)
+        })
+        }
+    },
 	methods: {
 		query: function () {
 			vm.reload();
@@ -217,3 +229,11 @@ var vm = new Vue({
         }
 	}
 });
+
+function getQueryString (name) {
+    // 获取脚本管理页面传过来的BeanName
+    var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
+    var r = window.location.search.substr(1).match(reg);
+    if(r!=null) return  decodeURI(r[2]);
+    return null;
+}

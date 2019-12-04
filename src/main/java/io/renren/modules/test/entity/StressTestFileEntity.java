@@ -40,7 +40,7 @@ public class StressTestFileEntity implements Serializable {
     /**
      * 用例文件名
      */
-//    @NotBlank(message="文件名不能为空")
+    //  @NotBlank(message="文件名不能为空")
     private String originName;
 
     /**
@@ -77,9 +77,9 @@ public class StressTestFileEntity implements Serializable {
     private Integer debugStatus;
 
     /**
-     * 脚本定时执行多少秒，默认是3小时
+     * 脚本最长定时执行多少秒，默认是4小时
      */
-    private Integer duration = 10800;
+    private Integer duration = 14400;
 
     /**
      * 提交的用户
@@ -226,12 +226,11 @@ public class StressTestFileEntity implements Serializable {
     public void setCaseName(String caseName) {
         this.caseName = caseName;
     }
-
+    
     public Integer getDebugStatus() {
         return debugStatus;
     }
-
-    public void setDebugStatus(Integer debugStatus) {
+     public void setDebugStatus(Integer debugStatus) {
         this.debugStatus = debugStatus;
     }
 

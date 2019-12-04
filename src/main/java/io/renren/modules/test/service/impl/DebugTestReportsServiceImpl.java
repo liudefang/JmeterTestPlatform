@@ -146,10 +146,10 @@ public class DebugTestReportsServiceImpl implements DebugTestReportsService {
     @Async("asyncServiceExecutor")
     public void createReport(Long[] reportIds) {
         for (Long reportId : reportIds) {
-            createReport(reportId);
+        	createReport(reportId);
         }
     }
-
+    
     /**
      * 采用异步线程池来实现。
      */
@@ -158,8 +158,7 @@ public class DebugTestReportsServiceImpl implements DebugTestReportsService {
     @Async("asyncServiceExecutor")
     public void createReport(Long reportId) {
         DebugTestReportsEntity debugTestReport = queryObject(reportId);
-
-        //首先判断，如果file_size为0或者空，说明没有结果文件，直接报错打断。
+      //首先判断，如果file_size为0或者空，说明没有结果文件，直接报错打断。
         if (debugTestReport.getFileSize() == 0L || debugTestReport.getFileSize() == null) {
             throw new RRException("找不到调试测试结果文件，无法生成测试报告！");
         }
@@ -197,7 +196,6 @@ public class DebugTestReportsServiceImpl implements DebugTestReportsService {
             update(debugTestReport);
             throw new RRException("执行生成测试报告脚本异常！", e);
         }
-
         //设置开始执行命令生成报告
         debugTestReport.setStatus(StressTestUtils.RUN_SUCCESS);
         update(debugTestReport);
